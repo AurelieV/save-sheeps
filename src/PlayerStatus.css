@@ -1,0 +1,62 @@
+.player-status {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.player-status .name {
+  font-size: 18px;
+  margin-right: 10px;
+  word-break: break-word;
+}
+.player-status .water-level {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 10px;
+  padding: 2px;
+  border: 1px solid black;
+}
+
+.player-status .water-level.emphased {
+  border-width: 2px;
+  border-color: red;
+}
+
+.player-status .water-level .level {
+  font-size: 15px;
+  font-weight: bold;
+}
+.player-status .water-level img {
+  width: 20px;
+  height: 20px;
+}
+.player-status .floats {
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+}
+.player-status .float {
+  width: 20px;
+  height: 30px;
+  margin: 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.player-status .float img {
+  width: 15px;
+  height: 15px;
+}
+
+.player-status .float:not(:first-child) {
+  margin-left: 2px;
+}
+
+.player-status .float.red {
+  background: red;
+}
+
+.player-status .float.blue {
+  background: blue;
+}
