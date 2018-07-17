@@ -12,23 +12,22 @@ const colors = {
 class Hand extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      selectedCard: null
-    }
     this.selectCard = this.selectCard.bind(this);
   }
   selectCard(selectedCard) {
-    this.setState({selectedCard})
+    if (this.props.canPlay) {
+      this.props.selectCard(selectedCard)
+    }
   }
   render() {
     return (
-      <ul className="hand">
+      <ul className={`${this.props.canPlay ? '' : 'inactive '} hand`}>
         {this.props.cards.sort((a, b) => a < b ? 1 : - 1).map((card) => (
           <li
             onClick={this.selectCard.bind(this, card)}
             key={card}
             style={{color: colors[Math.floor((card - 1)/12)]}}
-            className={card === this.state.selectedCard ? 'selected' : ''}
+            className={card === this.props.selectedCard ? 'selected' : ''}
           >{card}</li>
         ))}
       </ul>

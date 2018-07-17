@@ -8,6 +8,10 @@
   flex-wrap: wrap;
 }
 
+.hand.inactive {
+  opacity: 0.8;
+}
+
 .hand li {
   margin: 2px;
   padding: 0;
@@ -19,6 +23,10 @@
   align-items: center;
   background-color: darkblue;
   cursor: pointer;
+}
+
+.hand.inactive li {
+  cursor: not-allowed;
 }
 
 .hand li.selected {
