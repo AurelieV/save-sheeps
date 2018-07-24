@@ -85,4 +85,37 @@ export default class GameService {
     game.bets[userId] = card;
     this.game.next(game);
   }
+
+  computeGame(gameId) {
+    const game = {...this.game.getValue()};
+    const [king, prince] = Object.keys(game.bets)
+      .map(userId => ({id: userId, bet: game.bets[userId]}))
+      .sort((a, b) => a.bet < b.bet ? 1 : -1)
+      .map(x => x.id);
+    game.previousBets = {...game.bets};
+    game.players.forEach(player => {
+      if (player.id === king) {
+        player.waterLevel = Math.min(game.waterLevels1[0], game.waterLevels2[0]);
+      }
+      if (player.id === prince) {
+        player.waterLevel = Math.max(game.waterLevels1[0], game.waterLevels2[0]);
+      }
+      player.hand = player.hand.filter(card => card != game.bets[player.id]);
+      game.bets[player.id] = null;
+    });
+
+    const maxLevel = Math.max(...game.players.map(p => p.waterLevel));
+    game.players.forEach(player => {
+      if (player.waterLevel === maxLevel) {
+        player.remainingFloats--;
+      }
+    })
+
+    //TODO: handle when a player loose
+
+    game.waterLevels1 = game.waterLevels1.slice(1);
+    game.waterLevels2 = game.waterLevels2.slice(1);
+
+    this.game.next(game)
+  }
 }

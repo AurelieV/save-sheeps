@@ -8,7 +8,7 @@ class App extends Component {
     super(props);
     this.state = {
       game: null,
-      user: {id: 0, name: 'Aurélie'}
+      user: {id: '0', name: 'Aurélie'}
     }
     this.gameService = new GameService();
     this.createGame = this.createGame.bind(this);
@@ -21,12 +21,15 @@ class App extends Component {
     this.gameId = this.gameService.createGame(this.state.user)
     this.gameSubscription = this.gameService.getGame(this.gameId).subscribe(game => {
       this.setState({game})
+      if (game && game.bets && Object.values(game.bets).filter(bet => !bet).length === 0) {
+        this.computeTurn();
+      }
     })
     const players = [
-      { id: 1, name: 'Mathieu' },
-      { id: 2, name: 'Alex' },
-      { id: 3, name: 'Eliot' },
-      { id: 4, name: 'Jean-Phillipe' }
+      { id: '1', name: 'Mathieu' },
+      { id: '2', name: 'Alex' },
+      { id: '3', name: 'Eliot' },
+      { id: '4', name: 'Jean-Phillipe' }
     ]
     const addPlayers = () => {
       setTimeout(() => {
@@ -53,7 +56,7 @@ class App extends Component {
   }
 
   computeTurn() {
-    //TODO
+    this.gameService.computeGame(this.gameId);
   }
 
   render() {
