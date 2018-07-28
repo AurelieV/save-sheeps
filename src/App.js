@@ -56,7 +56,7 @@ class App extends Component {
   }
 
   computeTurn() {
-    this.gameService.computeGame(this.gameId);
+    this.gameService.computeTurn(this.gameId);
   }
 
   render() {
