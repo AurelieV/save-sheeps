@@ -29,6 +29,7 @@ function resolveBets(game) {
     .sort((a, b) => a.bet < b.bet ? 1 : -1)
     .map(x => x.id);
   game.previousBets = {...game.bets};
+  game.previousPlayers = game.players.map(player => ({...player})) // deep clone?
   game.players.forEach(player => {
     if (player.id === king) {
       player.waterLevel = Math.min(game.waterLevels1[0], game.waterLevels2[0]);

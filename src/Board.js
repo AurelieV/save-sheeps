@@ -6,6 +6,20 @@ import waterIcon from './icons/water.svg';
 import PlayerStatus from './PlayerStatus';
 
 class Board extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      displayPreviousBets: false
+    }
+    this.toggleDisplayPreviousBets = this.toggleDisplayPreviousBets.bind(this);
+  }
+
+  toggleDisplayPreviousBets() {
+    this.setState({
+      displayPreviousBets: !this.state.displayPreviousBets
+    })
+  }
+
   render() {
     const highestWaterLevel = Math.max(...this.props.game.players.filter(p => p.active).map(p => p.waterLevel));
     const canPlay = this.props.game.players[this.props.userId].active &&
@@ -33,6 +47,18 @@ class Board extends Component {
           </div>
         </div>
         <BetZone bets={this.props.game.bets} players={this.props.game.players}></BetZone>
+        {this.props.game.previousBets ?
+          (
+            <div className="previous-bets-container">
+              <button onClick={this.toggleDisplayPreviousBets} className="previous-bets-toggle">
+                {this.state.displayPreviousBets ? 'Hide previous bets' : 'Show previous bets'}
+              </button>
+              {this.state.displayPreviousBets ?
+                <BetZone bets={this.props.game.previousBets} players={this.props.game.previousPlayers}></BetZone> : ''
+              }
+            </div>
+          ) : ''
+        }
         <Hand
           cards={this.props.game.players[this.props.userId].hand}
           selectedCard={this.props.game.bets[this.props.userId]}

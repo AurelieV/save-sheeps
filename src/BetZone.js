@@ -30,7 +30,9 @@ class BetZone extends Component {
   }
 
   render() {
-    const hasEverybodyPlayed = Object.values(this.props.bets).filter(bet => !bet).length === 0;
+    const nbActivePlayers = this.props.players.filter(player => player.active).length;
+    const nbBets = Object.values(this.props.bets).filter(bet => bet).length;
+    const hasEverybodyPlayed = nbActivePlayers === nbBets;
     return (
       <div className="bet-zone">
         <div className={(hasEverybodyPlayed ? 'display-bet' : '') + ' bets'}>
