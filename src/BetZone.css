@@ -37,6 +37,10 @@
   background: darkblue;
 }
 
+.bet-zone .bets .bet-value-container.inactive {
+  background: black;
+}
+
 .bet-zone .bets .bet-value-container.king, .bet-zone .bets .bet-value-container.prince {
   border-color: gold;
   position: relative;

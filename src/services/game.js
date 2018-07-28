@@ -36,20 +36,29 @@ function resolveBets(game) {
     if (player.id === prince) {
       player.waterLevel = Math.max(game.waterLevels1[0], game.waterLevels2[0]);
     }
-    player.hand = player.hand.filter(card => card != game.bets[player.id]);
+    player.hand = player.hand.filter(card => card !== game.bets[player.id]);
     game.bets[player.id] = null;
   });
   game.waterLevels1 = game.waterLevels1.slice(1);
   game.waterLevels2 = game.waterLevels2.slice(1);
 }
 
-function updateFloats(game) {
-  const maxLevel = Math.max(...game.players.map(p => p.waterLevel));
+function updateFloatsAndStatus(game) {
+  const maxLevel = Math.max(...game.players.filter(p => p.active).map(p => p.waterLevel));
+  let hasOnePlayerDied = false;
   game.players.forEach(player => {
     if (player.waterLevel === maxLevel) {
-      player.remainingFloats--;
+      if (player.remainingFloats === 0) {
+        player.active = false;
+        hasOnePlayerDied = true;
+      } else {
+        player.remainingFloats--;
+      }
     }
   })
+  if (hasOnePlayerDied) {
+    updateFloatsAndStatus(game);
+  }
 }
 
 export default class GameService {
@@ -87,7 +96,15 @@ export default class GameService {
       const hand = cards.slice(i * 12, (i + 1) * 12);
       const totalFloats = calculateFloats(hand);
 
-      return {...player, totalFloats, remainingFloats: totalFloats, hand, waterLevel: 0}
+      return {
+        ...player,
+        totalFloats,
+        remainingFloats: totalFloats,
+        hand,
+        waterLevel: 0,
+        startingHand: [...hand],
+        active: true
+      }
     }));
 
     const bets = {};
@@ -118,7 +135,7 @@ export default class GameService {
   computeTurn(gameId) {
     const game = {...this.game.getValue()};
     resolveBets(game);
-    updateFloats(game);
+    updateFloatsAndStatus(game);
     this.game.next(game)
   }
 }

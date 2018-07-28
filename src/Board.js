@@ -7,8 +7,9 @@ import PlayerStatus from './PlayerStatus';
 
 class Board extends Component {
   render() {
-    const highestWaterLevel = Math.max(...this.props.game.players.map(p => p.waterLevel));
-    const canPlay = Object.values(this.props.game.bets).filter(bet => !bet).length > 0;
+    const highestWaterLevel = Math.max(...this.props.game.players.filter(p => p.active).map(p => p.waterLevel));
+    const canPlay = this.props.game.players[this.props.userId].active &&
+      Object.values(this.props.game.bets).filter(bet => !bet).length > 0;
 
     return (
       <div className="board">

@@ -3,6 +3,11 @@
   align-items: center;
   margin-bottom: 10px;
 }
+
+.player-status.inactive {
+  opacity: 0.5;
+}
+
 .player-status .name {
   font-size: 18px;
   margin-right: 10px;

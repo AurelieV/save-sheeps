@@ -20,17 +20,25 @@ class App extends Component {
   createGame() {
     this.gameId = this.gameService.createGame(this.state.user)
     this.gameSubscription = this.gameService.getGame(this.gameId).subscribe(game => {
-      this.setState({game})
-      if (game && game.bets && Object.values(game.bets).filter(bet => !bet).length === 0) {
-        this.computeTurn();
+      this.setState({game});
+
+      // Move this part to a firebase function ??
+      if (!game || !game.bets) return;
+      if (game.adminId !== this.state.user.id) return;
+      const nbPlayersWithBet = Object.values(game.bets).filter(bet => bet).length;
+      const nbActivePlayers = game.players.filter(player => player.active).length;
+      if (nbPlayersWithBet === nbActivePlayers) {
+        this.gameService.computeTurn(this.gameId);
       }
     })
+
     const players = [
       { id: '1', name: 'Mathieu' },
       { id: '2', name: 'Alex' },
       { id: '3', name: 'Eliot' },
       { id: '4', name: 'Jean-Phillipe' }
     ]
+
     const addPlayers = () => {
       setTimeout(() => {
         this.gameService.fakeJoin(this.gameId, players.pop())
@@ -51,12 +59,10 @@ class App extends Component {
   selectCard(card) {
     this.gameService.selectCard(this.gameId, this.state.user.id, card);
     for (let i = 1; i < 5; i++) {
-      this.gameService.selectCard(this.gameId, i, this.state.game.players[i].hand[0])
+      if (this.state.game.players[i].active) {
+        this.gameService.selectCard(this.gameId, i, this.state.game.players[i].hand[0])
+      }
     }
-  }
-
-  computeTurn() {
-    this.gameService.computeTurn(this.gameId);
   }
 
   render() {

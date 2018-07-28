@@ -9,7 +9,7 @@ function PlayerStatus(props) {
     .fill(true)
     .map((float, i) => i >= (props.player.totalFloats - props.player.remainingFloats))
   return (
-    <div className="player-status">
+    <div className={'player-status' + (props.player.active ? '' : ' inactive')}>
       <div className={(props.hasHighestWaterLevel ? 'emphased' : '') + ' water-level'}>
           <div className="level">{props.player.waterLevel}</div>
           <img src={waterIcon} alt="waterIcon"></img>

@@ -8,8 +8,11 @@ class BetZone extends Component {
     this.getBetValueContainerClass = this.getBetValueContainerClass.bind(this)
   }
 
-  getBetValueContainerClass(bet, hasEverybodyPlayed) {
+  getBetValueContainerClass(bet, hasEverybodyPlayed, isActive) {
     let className = 'bet-value-container';
+    if (!isActive) {
+      return className += ' inactive';
+    }
     if (bet) {
       className += ' played'
     }
@@ -31,14 +34,21 @@ class BetZone extends Component {
     return (
       <div className="bet-zone">
         <div className={(hasEverybodyPlayed ? 'display-bet' : '') + ' bets'}>
-          {Object.keys(this.props.bets).map(playerId => (
-            <div className="bet" key={playerId}>
-              <div className={this.getBetValueContainerClass(this.props.bets[playerId], hasEverybodyPlayed)}>
-                <span className="bet-value">{this.props.bets[playerId]}</span>
+          {Object.keys(this.props.bets).map(playerId => {
+            const containerClass = this.getBetValueContainerClass(
+              this.props.bets[playerId],
+              hasEverybodyPlayed,
+              this.props.players[playerId].active
+            )
+            return (
+              <div className="bet" key={playerId}>
+                <div className={containerClass}>
+                  <span className="bet-value">{this.props.bets[playerId]}</span>
+                </div>
+                <div className="bet-player">{this.props.players[playerId].name}</div>
               </div>
-              <div className="bet-player">{this.props.players[playerId].name}</div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     )
