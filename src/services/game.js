@@ -1,3 +1,4 @@
+import deepClone from 'lodash.clonedeep';
 import { BehaviorSubject } from 'rxjs';
 
 function shuffle(a) {
@@ -29,7 +30,7 @@ function resolveBets(game) {
     .sort((a, b) => a.bet < b.bet ? 1 : -1)
     .map(x => x.id);
   game.previousBets = {...game.bets};
-  game.previousPlayers = game.players.map(player => ({...player})) // deep clone?
+  game.previousPlayers = deepClone(game.players);
   game.players.forEach(player => {
     if (player.id === king) {
       player.waterLevel = Math.min(game.waterLevels1[0], game.waterLevels2[0]);
@@ -60,6 +61,44 @@ function updateFloatsAndStatus(game) {
   if (hasOnePlayerDied) {
     updateFloatsAndStatus(game);
   }
+}
+
+function goToNextGame(game) {
+  const [minWaterLevel] = Array.from(game.players)
+    .sort((a, b) => a.waterLevel < b.waterLevel ? 1 : -1)
+    .map(player => player.waterLevel)
+  ;
+
+  const nbPlayers = Object.keys(game.players).length;
+  let previousHand = game.players[nbPlayers - 1].startingHand;
+
+  game.players.forEach((player, i) => {
+    // Pass hand
+    const tmp = player.startingHand;
+    player.startingHand = Array.from(previousHand);
+    player.hand = Array.from(previousHand);
+    previousHand = tmp;
+
+    // Count points
+    player.points += player.active ? player.remainingFloats : -1;
+    if ((player.waterLevel === minWaterLevel) && player.active) player.points += 1
+
+    // Reset status
+    player.active = true;
+    const floats = calculateFloats(player.hand);
+    player.totalFloats = floats;
+    player.remainingFloats = floats;
+    player.waterLevel = 0;
+  })
+
+  // Reset the state
+  game.waterLevels1 = shuffle(Array.from({length: 12}, (v, k) => k+1));
+  game.waterLevels2 = shuffle(Array.from({length: 12}, (v, k) => k+1));
+  Object.keys(game.bets).forEach(playerId => game.bets[playerId] = null);
+  game.previousBets = null;
+  game.previousPlayers = null;
+
+  game.turn += 1;
 }
 
 export default class GameService {
@@ -104,7 +143,8 @@ export default class GameService {
         hand,
         waterLevel: 0,
         startingHand: [...hand],
-        active: true
+        active: true,
+        points: 0
       }
     }));
 
@@ -119,7 +159,8 @@ export default class GameService {
       waterLevels2,
       players,
       bets,
-      status: 'playing'
+      status: 'playing',
+      turn: 1
     })
   }
 
@@ -137,6 +178,13 @@ export default class GameService {
     const game = {...this.game.getValue()};
     resolveBets(game);
     updateFloatsAndStatus(game);
+    if (game.waterLevels1.length === 0) {
+      if (game.turn === game.players.length - 1) {
+        game.status = 'finished';
+      } else {
+        goToNextGame(game);
+      }
+    }
     this.game.next(game)
   }
 }

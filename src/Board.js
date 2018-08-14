@@ -27,6 +27,7 @@ class Board extends Component {
 
     return (
       <div className="board">
+        <div className="turn">Tour n°{this.props.game.turn}</div>
         <div className="player-statuses">
           {this.props.game.players.map(player =>
             <PlayerStatus

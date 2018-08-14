@@ -14,7 +14,10 @@ function PlayerStatus(props) {
           <div className="level">{props.player.waterLevel}</div>
           <img src={waterIcon} alt="waterIcon"></img>
         </div>
-        <div className="name">{props.player.name}</div>
+        <div className="information">
+          <div className="name">{props.player.name}</div>
+          <div className="points">{props.player.points}pts</div>
+        </div>
         <div className="floats">
           {floats.map((used, i) => <div className={(used ? 'blue' : 'red') + ' float'} key={i}>
             <img src={floatIcon} alt="floatIcon"></img>

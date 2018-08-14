@@ -13,6 +13,11 @@
   margin-right: 10px;
   word-break: break-word;
 }
+
+.player-status .points {
+  font-size: 12px;
+}
+
 .player-status .water-level {
   display: flex;
   justify-content: center;
