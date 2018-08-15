@@ -1,3 +1,5 @@
+import firebase from 'firebase/app';
+import 'firebase/database';
 import deepClone from 'lodash.clonedeep';
 import { BehaviorSubject } from 'rxjs';
 
@@ -103,7 +105,15 @@ function goToNextGame(game) {
 
 export default class GameService {
   constructor() {
-    this.game = new BehaviorSubject({})
+    this.app = firebase.initializeApp({
+      apiKey: "AIzaSyDNHYF2GGTf07kfNTKqTlTx25v8VeFGpmY",
+      authDomain: "save-the-sheeps.firebaseapp.com",
+      databaseURL: "https://save-the-sheeps.firebaseio.com",
+      projectId: "save-the-sheeps",
+      storageBucket: "save-the-sheeps.appspot.com",
+      messagingSenderId: "693383222482"
+    })
+    this.database = this.app.database();
   }
 
   createGame(admin) {
@@ -114,15 +124,18 @@ export default class GameService {
       ],
       status: 'waiting'
     }
-    this.game.next(game);
+    const newGame = this.database.ref('/games').push(game);
 
-    return 0;
+    return newGame.key;
   }
 
   fakeJoin(gameId, user) {
-    const game = {...this.game.getValue()};
-    game.players = game.players.concat(user);
-    this.game.next(game);
+    const playersRef = this.database.ref(`/games/${gameId}/players`);
+    playersRef.once('value').then(snapshot => {
+      const players = snapshot.val() || [];
+      players.push(user);
+      playersRef.set(players);
+    })
   }
 
   startGame(gameId) {
@@ -165,7 +178,13 @@ export default class GameService {
   }
 
   getGame(gameId) {
-    return this.game;
+    const game = new BehaviorSubject();
+    this.database.ref(`games/${gameId}`).on('value', (snapshot) => {
+      debugger;
+      game.next(snapshot.val());
+    });
+
+    return game;
   }
 
   selectCard(gameId, userId, card) {

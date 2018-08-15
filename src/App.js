@@ -18,19 +18,12 @@ class App extends Component {
   }
 
   createGame() {
-    this.gameId = this.gameService.createGame(this.state.user)
-    this.gameSubscription = this.gameService.getGame(this.gameId).subscribe(game => {
-      this.setState({game});
+    this.gameId = this.gameService.createGame(this.state.user);
+    if (window && window.sessionStorage) {
+      window.sessionStorage.setItem('currentGameId', this.gameId);
+    }
 
-      // Move this part to a firebase function ??
-      if (!game || !game.bets) return;
-      if (game.adminId !== this.state.user.id) return;
-      const nbPlayersWithBet = Object.values(game.bets).filter(bet => bet).length;
-      const nbActivePlayers = game.players.filter(player => player.active).length;
-      if (nbPlayersWithBet === nbActivePlayers) {
-        this.gameService.computeTurn(this.gameId);
-      }
-    })
+    this.loadGame(this.gameId);
 
     const players = [
       { id: '1', name: 'Mathieu' },
@@ -48,6 +41,24 @@ class App extends Component {
       }, 1000)
     }
     addPlayers();
+  }
+
+  loadGame(gameId) {
+    if (this.gameSubscription) {
+      this.gameSubscription.unsubscribe();
+    }
+    this.gameSubscription = this.gameService.getGame(gameId).subscribe(game => {
+      this.setState({game});
+
+      // Move this part to a firebase function ??
+      if (!game || !game.bets) return;
+      if (game.adminId !== this.state.user.id) return;
+      const nbPlayersWithBet = Object.values(game.bets).filter(bet => bet).length;
+      const nbActivePlayers = game.players.filter(player => player.active).length;
+      if (nbPlayersWithBet === nbActivePlayers) {
+        this.gameService.computeTurn(gameId);
+      }
+    })
   }
 
   startGame() {
@@ -99,6 +110,16 @@ class App extends Component {
   componentWillUnmount() {
     if (this.gameSubscription) {
       this.gameSubscription.unsubscribe()
+    }
+  }
+
+  componentDidMount() {
+    if (window && window.sessionStorage) {
+      const gameId = window.sessionStorage.getItem('currentGameId');
+      if (gameId) {
+        this.gameId = gameId;
+        this.loadGame(gameId);
+      }
     }
   }
 }
