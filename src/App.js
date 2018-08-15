@@ -1,46 +1,38 @@
 import React, { Component } from 'react';
 import './App.css';
 import Board from './Board';
+import CreateGameForm from './CreateGameForm';
+import JoinGameForm from './JoinGameForm';
 import GameService from './services/game';
+import UserService from './services/user';
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      game: null,
-      user: {id: '0', name: 'Aurélie'}
+      game: null
     }
     this.gameService = new GameService();
+    this.userService = new UserService();
     this.createGame = this.createGame.bind(this);
     this.startGame = this.startGame.bind(this);
     this.selectCard = this.selectCard.bind(this);
     this.joinGame = this.joinGame.bind(this);
+    this.copyGameId = this.copyGameId.bind(this);
   }
 
-  createGame() {
-    this.gameId = this.gameService.createGame(this.state.user);
+  createGame(pseudo) {
+    const user = {
+      ...this.state.user,
+      name: pseudo
+    }
+    this.gameId = this.gameService.createGame(user);
+    this.setState({user})
     if (window && window.sessionStorage) {
       window.sessionStorage.setItem('currentGameId', this.gameId);
     }
 
     this.loadGame(this.gameId);
-
-    const players = [
-      { id: '1', name: 'Mathieu' },
-      { id: '2', name: 'Alex' },
-      { id: '3', name: 'Eliot' },
-      { id: '4', name: 'Jean-Phillipe' }
-    ]
-
-    const addPlayers = () => {
-      setTimeout(() => {
-        this.gameService.fakeJoin(this.gameId, players.pop())
-        if (players.length > 0) {
-          addPlayers();
-        }
-      }, 1000)
-    }
-    addPlayers();
   }
 
   loadGame(gameId) {
@@ -65,29 +57,60 @@ class App extends Component {
     this.gameService.startGame(this.gameId);
   }
 
-  joinGame() {}
+  joinGame(gameId, pseudo) {
+    const user = {
+      ...this.state.user,
+      name: pseudo
+    }
+    this.setState({user});
+    this.gameService.joinGame(gameId, user);
+    //TODO: check if the id exist.
+    this.gameId = gameId;
+    this.loadGame(gameId);
+  }
 
   selectCard(card) {
     this.gameService.selectCard(this.gameId, this.state.user.id, card);
-    for (let i = 1; i < 5; i++) {
-      if (this.state.game.players[i].active) {
-        this.gameService.selectCard(this.gameId, i, this.state.game.players[i].hand[0])
-      }
-    }
+  }
+
+  copyGameId() {
+    const textarea = document.createElement("textarea");
+    textarea.textContent = this.gameId;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
   }
 
   render() {
+    if (!(this.state.user && this.state.user.id)) {
+      return <div>Connected to the server...</div>
+    }
     if (!this.state.game) {
       return (
         <div className="app-container">
-          <button className="primary" onClick={this.createGame}>Create a game</button>
+          <CreateGameForm onSubmit={this.createGame}></CreateGameForm>
+          <br/>
+            OR
+          <br/>
+          <br/>
+          <JoinGameForm onSubmit={this.joinGame}></JoinGameForm>
         </div>
       )
     }
     if (this.state.game.status === 'waiting') {
       return (
         <div className="app-container">
-          <div>Wait start of the game</div>
+          <h3>Wait start of the game</h3>
+          {this.state.game.adminId === this.state.user.id ?
+            (
+              <div className="game-info">
+                <div>Id to communicate to other players:</div>
+                <div className="game-id">{this.gameId}</div>
+                <button className="primary" onClick={this.copyGameId}>Copy</button>
+              </div>
+            ) : null
+          }
           <h3>List of players</h3>
           <ul>
             {this.state.game.players.map(player => (
@@ -109,7 +132,10 @@ class App extends Component {
 
   componentWillUnmount() {
     if (this.gameSubscription) {
-      this.gameSubscription.unsubscribe()
+      this.gameSubscription.unsubscribe();
+    }
+    if (this.userSubscription) {
+      this.userSubscription.unsubscribe();
     }
   }
 
@@ -121,6 +147,11 @@ class App extends Component {
         this.loadGame(gameId);
       }
     }
+    this.userSubscription = this.userService.user.subscribe(user => {
+      this.setState({
+        user: user ? { id: user.uid } : null
+      })
+    })
   }
 }
 

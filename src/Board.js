@@ -22,8 +22,8 @@ class Board extends Component {
 
   render() {
     const highestWaterLevel = Math.max(...this.props.game.players.filter(p => p.active).map(p => p.waterLevel));
-    const canPlay = this.props.game.players[this.props.userId].active &&
-      Object.values(this.props.game.bets).filter(bet => !bet).length > 0;
+    const currentUser = this.props.game.players.find(player => player.id === this.props.userId);
+    const canPlay = currentUser.active && Object.values(this.props.game.bets).filter(bet => !bet).length > 0;
 
     return (
       <div className="board">
@@ -61,7 +61,7 @@ class Board extends Component {
           ) : ''
         }
         <Hand
-          cards={this.props.game.players[this.props.userId].hand}
+          cards={currentUser.hand}
           selectedCard={this.props.game.bets[this.props.userId]}
           selectCard={this.props.selectCard}
           canPlay={canPlay}>

@@ -1,7 +1,7 @@
-import firebase from 'firebase/app';
 import 'firebase/database';
 import deepClone from 'lodash.clonedeep';
 import { BehaviorSubject } from 'rxjs';
+import app from './firebaseApp';
 
 function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) {
@@ -41,7 +41,7 @@ function resolveBets(game) {
       player.waterLevel = Math.max(game.waterLevels1[0], game.waterLevels2[0]);
     }
     player.hand = player.hand.filter(card => card !== game.bets[player.id]);
-    game.bets[player.id] = null;
+    game.bets[player.id] = '';
   });
   game.waterLevels1 = game.waterLevels1.slice(1);
   game.waterLevels2 = game.waterLevels2.slice(1);
@@ -71,7 +71,7 @@ function goToNextGame(game) {
     .map(player => player.waterLevel)
   ;
 
-  const nbPlayers = Object.keys(game.players).length;
+  const nbPlayers = game.players.length;
   let previousHand = game.players[nbPlayers - 1].startingHand;
 
   game.players.forEach((player, i) => {
@@ -96,7 +96,7 @@ function goToNextGame(game) {
   // Reset the state
   game.waterLevels1 = shuffle(Array.from({length: 12}, (v, k) => k+1));
   game.waterLevels2 = shuffle(Array.from({length: 12}, (v, k) => k+1));
-  Object.keys(game.bets).forEach(playerId => game.bets[playerId] = null);
+  Object.keys(game.bets).forEach(playerId => game.bets[playerId] = '');
   game.previousBets = null;
   game.previousPlayers = null;
 
@@ -105,15 +105,7 @@ function goToNextGame(game) {
 
 export default class GameService {
   constructor() {
-    this.app = firebase.initializeApp({
-      apiKey: "AIzaSyDNHYF2GGTf07kfNTKqTlTx25v8VeFGpmY",
-      authDomain: "save-the-sheeps.firebaseapp.com",
-      databaseURL: "https://save-the-sheeps.firebaseio.com",
-      projectId: "save-the-sheeps",
-      storageBucket: "save-the-sheeps.appspot.com",
-      messagingSenderId: "693383222482"
-    })
-    this.database = this.app.database();
+    this.database = app.database();
   }
 
   createGame(admin) {
@@ -129,7 +121,7 @@ export default class GameService {
     return newGame.key;
   }
 
-  fakeJoin(gameId, user) {
+  joinGame(gameId, user) {
     const playersRef = this.database.ref(`/games/${gameId}/players`);
     playersRef.once('value').then(snapshot => {
       const players = snapshot.val() || [];
@@ -139,48 +131,49 @@ export default class GameService {
   }
 
   startGame(gameId) {
-    const game = {...this.game.getValue()};
+    const gameRef = this.database.ref(`/games/${gameId}`);
+    gameRef.once('value').then(snapshot => {
+      const game = snapshot.val();
+      const cards = shuffle(Array.from({length: 60}, (v, k) => k+1));
+      const waterLevels1 = shuffle(Array.from({length: 12}, (v, k) => k+1));
+      const waterLevels2 = shuffle(Array.from({length: 12}, (v, k) => k+1));
 
-    const cards = shuffle(Array.from({length: 60}, (v, k) => k+1));
-    const waterLevels1 = shuffle(Array.from({length: 12}, (v, k) => k+1));
-    const waterLevels2 = shuffle(Array.from({length: 12}, (v, k) => k+1));
+      const players = game.players.map(((player, i) => {
+        const hand = cards.slice(i * 12, (i + 1) * 12);
+        const totalFloats = calculateFloats(hand);
 
-    const players = game.players.map(((player, i) => {
-      const hand = cards.slice(i * 12, (i + 1) * 12);
-      const totalFloats = calculateFloats(hand);
+        return {
+          ...player,
+          totalFloats,
+          remainingFloats: totalFloats,
+          hand,
+          waterLevel: 0,
+          startingHand: [...hand],
+          active: true,
+          points: 0
+        }
+      }));
 
-      return {
-        ...player,
-        totalFloats,
-        remainingFloats: totalFloats,
-        hand,
-        waterLevel: 0,
-        startingHand: [...hand],
-        active: true,
-        points: 0
-      }
-    }));
+      const bets = {};
+      players.forEach(player => {
+        bets[player.id] = '';
+      });
 
-    const bets = {};
-    players.forEach(player => {
-      bets[player.id] = null;
-    });
-
-    this.game.next({
-      ...game,
-      waterLevels1,
-      waterLevels2,
-      players,
-      bets,
-      status: 'playing',
-      turn: 1
+      gameRef.set({
+        ...game,
+        waterLevels1,
+        waterLevels2,
+        players,
+        bets,
+        status: 'playing',
+        turn: 1
+      })
     })
   }
 
   getGame(gameId) {
     const game = new BehaviorSubject();
-    this.database.ref(`games/${gameId}`).on('value', (snapshot) => {
-      debugger;
+    this.database.ref(`/games/${gameId}`).on('value', (snapshot) => {
       game.next(snapshot.val());
     });
 
@@ -188,22 +181,24 @@ export default class GameService {
   }
 
   selectCard(gameId, userId, card) {
-    const game = {...this.game.getValue()};
-    game.bets[userId] = card;
-    this.game.next(game);
+    const cardRef = this.database.ref(`/games/${gameId}/bets/${userId}`)
+    cardRef.set(card);
   }
 
   computeTurn(gameId) {
-    const game = {...this.game.getValue()};
-    resolveBets(game);
-    updateFloatsAndStatus(game);
-    if (game.waterLevels1.length === 0) {
-      if (game.turn === game.players.length - 1) {
-        game.status = 'finished';
-      } else {
-        goToNextGame(game);
+    const gameRef = this.database.ref(`/games/${gameId}`);
+    gameRef.once('value').then(snapshot => {
+      const game = snapshot.val();
+      resolveBets(game);
+      updateFloatsAndStatus(game);
+      if (game.waterLevels1.length === 0) {
+        if (game.turn === game.players.length - 1) {
+          game.status = 'finished';
+        } else {
+          goToNextGame(game);
+        }
       }
-    }
-    this.game.next(game)
+      gameRef.set(game);
+    })
   }
 }

@@ -19,3 +19,54 @@ button.primary:focus, button.primary:active{
   color: rebeccapurple;
   border: 1px solid rebeccapurple;
 }
+
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.form-container .input-container {
+  align-self: flex-end;
+}
+
+.form-container .input-container:not(:first-child) {
+  margin-top: 10px;
+}
+
+.form-container button {
+  margin-top: 10px;
+}
+
+.input-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.input-container label {
+  margin-right: 10px;
+}
+.input-container input {
+  border: 1px solid black;
+  height: 20px;
+}
+
+.game-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-content: center;
+}
+
+.game-info .game-id {
+  font-size: 16px;
+  font-weight: bold;
+  font-style: italic;
+  margin-top: 10px;
+  text-align: center;
+}
+.game-info button {
+  margin-top: 10px;
+}

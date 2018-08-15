@@ -37,17 +37,18 @@ class BetZone extends Component {
       <div className="bet-zone">
         <div className={(hasEverybodyPlayed ? 'display-bet' : '') + ' bets'}>
           {Object.keys(this.props.bets).map(playerId => {
+            const player = this.props.players.find(player => player.id === playerId);
             const containerClass = this.getBetValueContainerClass(
               this.props.bets[playerId],
               hasEverybodyPlayed,
-              this.props.players[playerId].active
+              player.active
             )
             return (
               <div className="bet" key={playerId}>
                 <div className={containerClass}>
                   <span className="bet-value">{this.props.bets[playerId]}</span>
                 </div>
-                <div className="bet-player">{this.props.players[playerId].name}</div>
+                <div className="bet-player">{player.name}</div>
               </div>
             )
           })}
